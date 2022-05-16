@@ -1,0 +1,57 @@
+#' spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the 
+#' detection of spatial expression patterns for large spatial transcriptomic
+#' studies.
+#'  
+#' This function generates the p-value and estimated coefficients of each 
+#' component in the GSVCM.
+#'
+#' @import mgcv
+#' @param formula.spSV A formula of Generalized Partially Spatially Varying 
+#' Coefficient Model.
+#' @param Y A vector of count of RNA-seq reads with length \code{n}. 
+#' @param dat.fit A list of data containing explanatory variables, 
+#' spline basis functions, and the kronecker product of explanatory variables and
+#' spline basis functions.
+#' @param size.factors A vector of size.factors with length \code{n}. 
+#' @param pen.list A list of roughness penalty in estimating spatial patterns.
+#' @return
+#' \item{p.value}{p-values of model components}
+#' \item{coeff.fit}{estimate coefficients.}
+#' @export
+library(mgcv)
+source("varying.test.R")
+
+fit.spVC <- function(formula.spSV, Y.iter, dat.fit, size.factors, pen.list){
+  
+  dat.fit[length(dat.fit) + 1] <- Y.iter
+  names(dat.fit)[length(dat.fit)] = "Y"
+  mfit.spVC <- gam(formula.spSV, data = dat.fit,
+                  family = quasipoisson(), offset = log(size.factors),
+                  paraPen = pen.list)
+  spVC.term <- attr(mfit.spVC$terms, "term.labels")
+  idx.c <- which(substr(spVC.term, 1, 2) == "c_")
+  idx.v <- which(substr(spVC.term, 1, 2) == "v_")
+  
+  p.value.c <- anova(mfit.spVC)$pTerms.pv[idx.c]
+  coeff.fit <- mfit.spVC$coefficients
+  
+  p.X <- length(idx.c)
+  V.all <- mfit.spVC$Vp
+  edf.all <- mfit.spVC$edf
+  Xt <- dat.fit$v_Int
+  rdf <- length(mfit.spVC$y) - sum(mfit.spVC$edf)
+  dim.BQ2 <- cumsum(rep(ncol(Xt), length(idx.v)))
+  if(length(idx.v) == 1) {
+    start.all <- p.X + 1
+  } else {
+    start.all <- c(p.X + 1, dim.BQ2[-length(idx.v)] + p.X + 1)
+  }
+  stop.all <- dim.BQ2 + p.X
+  
+  p.value.v <- varying.test(start.all, stop.all, 
+                          V.all, coeff.fit, edf.all, Xt, rdf)
+  names(p.value.v) <- spVC.term[idx.v]
+  p.value <- c(p.value.c, p.value.v)
+  
+  list(p.value = p.value, coeff.fit = coeff.fit)
+}
