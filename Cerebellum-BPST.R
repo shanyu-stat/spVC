@@ -20,17 +20,14 @@ source("eval.spVC.R")
 
 # input ----
 # rows are genes, columns are cells
-Y = readRDS("../Data/counts.rds")
-size.factors = colSums(Y)
-size.factors = size.factors/median(size.factors)
-S = readRDS("../Data/coords.rds")
-weights = readRDS("../Data/weight.cell.rds")
+Y = readRDS("counts.rds")
+S = readRDS("coords.rds")
+weights = readRDS("weight.cell.rds")
 
 type = c("Granule", "Bergmann", "Oligodendrocytes", "Purkinje", "MLI2",
          "Astrocytes")
 X = as.matrix(weights)[, type]
-X = scale(X/rowSums(as.matrix(weights)))
-S = S/1000
+X = X/rowSums(as.matrix(weights))
 
 # boundary and triangulation for bivariate spline over triangulation
 boundary <- read.csv("cell_boundary_v2.csv")

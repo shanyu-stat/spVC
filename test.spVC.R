@@ -32,7 +32,16 @@ library(MGLM)
 library(parallel)
 source("fit.spVC.R")
 
-test.spVC = function(Y, X, S, V, Tr, para.cores, subset = 1:nrow(Y)){
+test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE, 
+                     subset = 1:nrow(Y)){
+  
+  # standardize location points and boundary
+  min.x <- min(V[, 1]); max.x <- max(V[, 1])
+  min.y <- min(V[, 2]); max.y <- max(V[, 2])
+  V[, 1] <- (V[, 1] - min.x)/max.x
+  V[, 2] <- (V[, 2] - min.y)/max.y
+  S[, 1] <- (S[, 1] - min.x)/max.x
+  S[, 2] <- (S[, 2] - min.y)/max.y
   
   ind <- inVT(V, Tr, S[, 1], S[, 2])$ind.inside
   cat("spCV model will use ", length(ind)/nrow(S)*100,
@@ -40,6 +49,9 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, subset = 1:nrow(Y)){
   d = 2
   
   S.est <- S[ind, ]
+  if(scaleX == TRUE){
+    X.est = scale(X.est)
+  }
   X.est <- cbind(1, X[ind, ])
   colnames(X.est)[1] <- "Int"
   Y.est <- Y[, ind]
