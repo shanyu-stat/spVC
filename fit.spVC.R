@@ -16,7 +16,8 @@
 #' @param pen.list A list of roughness penalty in estimating spatial patterns.
 #' @return
 #' \item{p.value}{p-values of model components}
-#' \item{coeff.fit}{estimate coefficients.}
+#' \item{coeff.beta}{estimate beta}
+#' \item{coeff.gamma}{estimate basis coefficients of gamma functions}
 #' @export
 library(mgcv)
 source("varying.test.R")
@@ -29,16 +30,20 @@ fit.spVC <- function(formula.spSV, Y.iter, dat.fit, size.factors, pen.list){
                   family = quasipoisson(), offset = log(size.factors),
                   paraPen = pen.list)
   spVC.term <- attr(mfit.spVC$terms, "term.labels")
-  idx.c <- which(substr(spVC.term, 1, 2) == "c_")
-  idx.v <- which(substr(spVC.term, 1, 2) == "v_")
+  idx.c <- which(substr(spVC.term, 1, 5) == "beta_")
+  idx.v <- which(substr(spVC.term, 1, 6) == "gamma_")
   
   p.value.c <- anova(mfit.spVC)$pTerms.pv[idx.c]
   coeff.fit <- mfit.spVC$coefficients
+  coeff.beta <- mfit.spVC$coefficients[idx.c]
+  coeff.gamma <- matrix(mfit.spVC$coefficients[-idx.c], 
+                            ncol = length(idx.v))
+  colnames(coeff.gamma) <- spVC.term[idx.v]
   
   p.X <- length(idx.c)
   V.all <- mfit.spVC$Vp
   edf.all <- mfit.spVC$edf
-  Xt <- dat.fit$v_Int
+  Xt <- dat.fit$gamma_0
   rdf <- length(mfit.spVC$y) - sum(mfit.spVC$edf)
   dim.BQ2 <- cumsum(rep(ncol(Xt), length(idx.v)))
   if(length(idx.v) == 1) {
@@ -53,5 +58,6 @@ fit.spVC <- function(formula.spSV, Y.iter, dat.fit, size.factors, pen.list){
   names(p.value.v) <- spVC.term[idx.v]
   p.value <- c(p.value.c, p.value.v)
   
-  list(p.value = p.value, coeff.fit = coeff.fit)
+  list(p.value = p.value, coeff.beta = coeff.beta,
+       coeff.gamma = coeff.gamma)
 }

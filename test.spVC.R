@@ -17,11 +17,11 @@
 #' where \code{nTr} is the number of triangles in the triangulation.
 #' @param para.cores Number of cores in parallel computing.
 #' @return
-#' \item{results.main}{A list of spatial pattern testing results for 
+#' \item{results.constant}{A list of spatial pattern testing results for 
 #' each gene based on Model 1. We conduct the test for genes with more than one hundred nonzero
 #' counts. Each element contains p-values of model components and estimate 
 #' coefficients.}
-#' \item{results.interact}{A list of spatial pattern testing results for 
+#' \item{results.varying}{A list of spatial pattern testing results for 
 #' each gene based on Model 2. We conduct the test for genes with significant spatial pattern 
 #' and explanatory variable. Each element contains p-values of model components
 #' and estimate coefficients.}
@@ -53,7 +53,7 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
     X.est = scale(X.est)
   }
   X.est <- cbind(1, X[ind, ])
-  colnames(X.est)[1] <- "Int"
+  colnames(X.est)[1] <- "0"
   Y.est <- Y[, ind]
   size.factors <- colSums(Y.est)
   size.factors <- size.factors/median(size.factors)
@@ -81,29 +81,30 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
     dat.fit[[p.X + ii]] = kr(matrix(X.est[, ii], ncol = 1), BQ2.center[, -1])
     pen.list[[ii]] = list(PQ2[2:ncol(Q2), 2:ncol(Q2)])
   }
-  names(dat.fit)[1:p.X] = paste0("c_", colnames(X.est))
-  names(dat.fit)[p.X + 1:p.X] = paste0("v_", colnames(X.est))
-  names(pen.list) = paste0("v_", colnames(X.est))
+  names(dat.fit)[1:p.X] = paste0("beta_", colnames(X.est))
+  names(dat.fit)[p.X + 1:p.X] = paste0("gamma_", colnames(X.est))
+  names(pen.list) = paste0("gamma_", colnames(X.est))
   
   formula.ggam <- as.formula(
     paste0("Y ~ 0 + ", paste0(names(dat.fit)[c(1:(p.X+1))], collapse = " + "))
     )
 
   idx <- names(which(apply(Y[subset, ], 1, function(x) sum(x != 0) > 100)))
-  cat("Conduct testing based on Model 1 for", length(idx), "\n")
+  cat("Model 1: Conducting tests for", length(idx), " genes.\n")
   
-  results.main <- mclapply(idx, mc.cores = para.cores,
+  results.constant <- mclapply(idx, mc.cores = para.cores,
     FUN = function(x){
-      print(x)
+      idx.x <- which(idx == x)
+      cat("Fitting Model 1 for Gene", idx.x, "out of", length(idx), "genes.\n")
       mfit.iter <- fit.spVC(formula.ggam, Y.iter = as.vector(Y.est[x, ]),
         dat.fit = dat.fit, size.factors = size.factors, 
         pen.list = pen.list)
       }
     )
                                
-  names(results.main) <- idx
+  names(results.constant) <- idx
   
-  p.value.all <- lapply(results.main, "[[", 1)
+  p.value.all <- lapply(results.constant, "[[", 1)
   p.value.mtx <- do.call("rbind", p.value.all)
     
   p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method ="BY")
@@ -111,12 +112,16 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
   idx.S <- which(p.adj[, p.X] < 0.1)
   idx.test <- intersect(idx.X, idx.S)
   p.adj.name <- colnames(X.est[, -1])
-  cat("Conduct testing based on Model 2 for", length(idx.test), "genes\n")
-  
-  results.interact <- mclapply(idx[idx.test], mc.cores = para.cores,
+  cat("Model 2: Conducting tests for", length(idx.test), "genes.\n")
+ 
+  results.varying <- mclapply(idx[idx.test], mc.cores = para.cores,
     FUN = function(x){
-          v.set <- paste0("v_", c("Int", p.adj.name[p.adj[x, -p.X] < 0.1]))
-          c.set <- paste0("c_",  c("Int", p.adj.name))
+      
+          idx.x <- which(idx[idx.test] == x)
+          cat("Fitting Model 2 for Gene", idx.x, "out of", length(idx.test), "genes.\n")
+      
+          v.set <- paste0("gamma_", c("0", p.adj.name[p.adj[x, -p.X] < 0.1]))
+          c.set <- paste0("beta_",  c("0", p.adj.name))
           formula.iter <- as.formula(
             paste0("Y ~ 0 + ", paste0(c.set, collapse = " + "),
             " + ", paste0(v.set, collapse = " + "))
@@ -127,8 +132,8 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
     }
   )
   
-  names(results.interact) <- idx[idx.test]
+  names(results.varying) <- idx[idx.test]
   
-  list(results.main = results.main, results.interact = results.interact,
+  list(results.constant = results.constant, results.varying = results.varying,
        BQ2.center.est = colMeans(BQ2))
 }
