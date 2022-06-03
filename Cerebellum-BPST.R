@@ -59,7 +59,11 @@ for(iter in 1:ncol(gamma.points)){
   df <- data.frame(x = S[, 1], y = S[, 2], value = gamma.points[, iter])
   title <- colnames(gamma.points)[iter]
   p <- ggplot(data = df, aes_string (x = "x", y = "y", col = "value")) +
-    geom_point(size = 0.3) + scico::scale_colour_scico(palette = "lajolla") +
+    geom_point(size = 0.3) + 
+    # scico::scale_colour_scico(palette = "lajolla") +
+    scale_color_gradient2(low = "blue", high = "red", mid = "white",
+                          midpoint = 0, na.value = 'transparent') +
+    theme_classic() +
     labs(title = title)
   print(p)
 }
@@ -81,8 +85,10 @@ for(iter in 1:ncol(gamma.points)){
   # generate plots
   p.iter <- ggplot(data = data, aes(x = x, y = y)) +
     geom_raster(aes(fill = value)) +
-    scale_fill_gradientn(colours = matlab.like(104),
-                         limits = value.range, na.value = 'transparent') +
+    # scale_fill_gradientn(colours = matlab.like(104),
+    #                      limits = value.range, na.value = 'transparent') +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                         midpoint = 0, na.value = 'transparent') +
     coord_fixed(ratio = 1) + labs(title = title) +
     theme_bw()+theme(panel.grid.major = element_blank(),
                      panel.grid.minor = element_blank(), legend.title=element_blank(),
