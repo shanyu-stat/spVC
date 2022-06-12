@@ -16,7 +16,14 @@
 #' @param Tr The triangulation matrix of dimension \code{nTr} by three,
 #' where \code{nTr} is the number of triangles in the triangulation.
 #' @param para.cores Number of cores in parallel computing.
+#' @param p.adjust.method The p-value adjustment methods.
+#' @param p.adjust.thresh Significant value for adjusted p-value.
+#' @param linear.fit indicator of whether to fit generalized linear model.
 #' @return
+#' \item{results.linear}{A list of spatial pattern testing results for 
+#' each gene based on the generalized linear model. We conduct the test for 
+#' genes with more than one hundred nonzero counts. Each element contains 
+#' p-values of model components and estimate coefficients.}
 #' \item{results.constant}{A list of spatial pattern testing results for 
 #' each gene based on Model 1. We conduct the test for genes with more than one hundred nonzero
 #' counts. Each element contains p-values of model components and estimate 
@@ -33,7 +40,8 @@ library(parallel)
 source("fit.spVC.R")
 
 test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE, 
-                     subset = 1:nrow(Y)){
+                     subset = 1:nrow(Y), p.adjust.method ="BH",
+                     p.adjust.thresh = 0.05, linear.fit = TRUE){
   
   # standardize location points and boundary
   min.x <- min(V[, 1]); max.x <- max(V[, 1])
@@ -91,11 +99,29 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
 
   idx <- names(which(apply(Y[subset, ], 1, function(x) sum(x != 0) > 100)))
   cat("Model 1: Conducting tests for", length(idx), " genes.\n")
+  print.idx <- 1:length(idx)
+  names(print.idx) <- idx
+  results.linear <- NULL
+  
+  if(linear.fit == TRUE) {
+    formula.linear <- as.formula(
+      paste0("Y ~ 0 + ", paste0(names(dat.fit)[c(1:(p.X))], collapse = " + "))
+    )
+    
+    results.linear <- mclapply(idx, mc.cores = para.cores,
+      FUN = function(x){
+        cat("Fitting Linear Model for Gene", print.idx[x], "out of",
+            length(idx), "genes.\n")
+        mfit.iter <- fit.spVC(formula.linear, Y.iter = as.vector(Y.est[x, ]),
+        dat.fit = dat.fit, size.factors = size.factors, pen.list = pen.list)
+      }
+    )
+  }
+  
   
   results.constant <- mclapply(idx, mc.cores = para.cores,
     FUN = function(x){
-      idx.x <- which(idx == x)
-      cat("Fitting Model 1 for Gene", idx.x, "out of", length(idx), "genes.\n")
+      cat("Fitting Model 1 for Gene", print.idx[x], "out of", length(idx), "genes.\n")
       mfit.iter <- fit.spVC(formula.ggam, Y.iter = as.vector(Y.est[x, ]),
         dat.fit = dat.fit, size.factors = size.factors, 
         pen.list = pen.list)
@@ -107,20 +133,25 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
   p.value.all <- lapply(results.constant, "[[", 1)
   p.value.mtx <- do.call("rbind", p.value.all)
     
-  p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method ="BY")
-  idx.X <- which(apply(p.adj[, 1:(p.X - 1)], 1, FUN = function(x) any(x < 0.1)))
-  idx.S <- which(p.adj[, p.X] < 0.1)
+  p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method = p.adjust.method)
+  idx.X <- which(apply(p.adj[, 1:(p.X - 1)], 1, 
+                       FUN = function(x) any(x < p.adjust.thresh)))
+  idx.S <- which(p.adj[, p.X] < p.adjust.thresh)
   idx.test <- intersect(idx.X, idx.S)
   p.adj.name <- colnames(X.est[, -1])
   cat("Model 2: Conducting tests for", length(idx.test), "genes.\n")
- 
+  
+  print.idx <- 1:length(idx.test)
+  names(print.idx) <- idx[idx.test]
+  
   results.varying <- mclapply(idx[idx.test], mc.cores = para.cores,
     FUN = function(x){
       
-          idx.x <- which(idx[idx.test] == x)
-          cat("Fitting Model 2 for Gene", idx.x, "out of", length(idx.test), "genes.\n")
+          # idx.x <- which(idx[idx.test] == x)
+          cat("Fitting Model 2 for Gene", print.idx[x], "out of", 
+              length(idx.test), "genes.\n")
       
-          v.set <- paste0("gamma_", c("0", p.adj.name[p.adj[x, -p.X] < 0.1]))
+          v.set <- paste0("gamma_", c("0", p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]))
           c.set <- paste0("beta_",  c("0", p.adj.name))
           formula.iter <- as.formula(
             paste0("Y ~ 0 + ", paste0(c.set, collapse = " + "),
@@ -134,6 +165,7 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
   
   names(results.varying) <- idx[idx.test]
   
-  list(results.constant = results.constant, results.varying = results.varying,
+  list(results.linear = results.linear, results.constant = results.constant,
+       results.varying = results.varying,
        BQ2.center.est = colMeans(BQ2))
 }
