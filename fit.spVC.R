@@ -33,7 +33,8 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   mfit.spVC <- gam(formula.spVC, data = dat.fit,
                   family = quasipoisson(), offset = log(size.factors),
                   paraPen = pen.list)
-  R2 <- 1 - mfit.spVC$deviance/mfit.spVC$null.deviance
+  R2 <- max(0, 1 - mfit.spVC$deviance/mfit.spVC$null.deviance)
+  Deviance <- mfit.spVC$deviance
   spVC.term <- attr(mfit.spVC$terms, "term.labels")
   idx.c <- which(substr(spVC.term, 1, 5) == "beta_")
   idx.v <- which(substr(spVC.term, 1, 6) == "gamma_")
@@ -71,5 +72,5 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   p.value <- c(p.value.c, p.value.v)
   
   list(p.value = p.value, coeff.beta = coeff.beta,
-       coeff.gamma = coeff.gamma,  R2 = R2)
+       coeff.gamma = coeff.gamma,  R2 = R2, Deviance = Deviance)
 }

@@ -98,7 +98,7 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
     )
 
   idx <- names(which(apply(Y[subset, ], 1, function(x) sum(x != 0) > 100)))
-  cat("Model 1: Conducting tests for", length(idx), " genes.\n")
+  cat("Linear Model & Model 1: Conducting tests for", length(idx), " genes.\n")
   print.idx <- 1:length(idx)
   names(print.idx) <- idx
   results.linear <- NULL
@@ -116,6 +116,7 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
         dat.fit = dat.fit, size.factors = size.factors, pen.list = pen.list)
       }
     )
+    names(results.linear) <- idx
   }
   
   
