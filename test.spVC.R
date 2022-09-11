@@ -19,6 +19,7 @@
 #' @param p.adjust.method The p-value adjustment methods.
 #' @param p.adjust.thresh Significant value for adjusted p-value.
 #' @param linear.fit indicator of whether to fit generalized linear model.
+#' @param filter.min.nonzero filter genes whose number of nonzero counts is larger than \code{filter.min.nonzero}.
 #' @return
 #' \item{results.linear}{A list of spatial pattern testing results for 
 #' each gene based on the generalized linear model. We conduct the test for 
@@ -41,7 +42,8 @@ source("fit.spVC.R")
 
 test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE, 
                      subset = 1:nrow(Y), p.adjust.method ="BH",
-                     p.adjust.thresh = 0.05, linear.fit = TRUE){
+                     p.adjust.thresh = 0.05, linear.fit = TRUE,
+                     filter.min.nonzero = 100){
   
   # standardize location points and boundary
   min.x <- min(V[, 1]); max.x <- max(V[, 1])
@@ -97,7 +99,8 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
     paste0("Y ~ 0 + ", paste0(names(dat.fit)[c(1:(p.X+1))], collapse = " + "))
     )
 
-  idx <- names(which(apply(Y[subset, ], 1, function(x) sum(x != 0) > 100)))
+  idx <- names(which(apply(Y[subset, ], 1, 
+                           function(x) sum(x != 0) > filter.min.nonzero)))
   cat("Linear Model & Model 1: Conducting tests for", length(idx), " genes.\n")
   print.idx <- 1:length(idx)
   names(print.idx) <- idx
