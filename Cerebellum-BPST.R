@@ -38,7 +38,8 @@ Tr = as.matrix(Tr.cell$Tr)
 
 # spatial pattern testing ----
 results <- test.spVC(Y = Y, X, S, V, Tr, para.cores = 1, 
-                     subset = 1:1000)
+                     subset = 1:1000, 
+                     fix.contant = c("Granule", "Bergmann"))
 save(results, file = "Cerebellum-BPST-results.RData")
 
 # plot the estimated gamma functions ----

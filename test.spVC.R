@@ -42,8 +42,8 @@ source("fit.spVC.R")
 
 test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE, 
                      subset = 1:nrow(Y), p.adjust.method ="BH",
-                     p.adjust.thresh = 0.05, linear.fit = TRUE,
-                     filter.min.nonzero = 100){
+                     p.adjust.thresh = 0.05, linear.fit = FALSE,
+                     filter.min.nonzero = 100, fix.contant = NULL){
   
   # standardize location points and boundary
   min.x <- min(V[, 1]); max.x <- max(V[, 1])
@@ -154,8 +154,11 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
           # idx.x <- which(idx[idx.test] == x)
           cat("Fitting Model 2 for Gene", print.idx[x], "out of", 
               length(idx.test), "genes.\n")
-      
-          v.set <- paste0("gamma_", c("0", p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]))
+          varying.set1 <- p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]
+          varying.set2 <- setdiff(colnames(X.est)[-1], fix.contant)
+          
+          v.set <- paste0("gamma_", c("0", intersect(varying.set1,
+                                                     varying.set2)))
           c.set <- paste0("beta_",  c("0", p.adj.name))
           formula.iter <- as.formula(
             paste0("Y ~ 0 + ", paste0(c.set, collapse = " + "),
@@ -169,7 +172,17 @@ test.spVC = function(Y, X, S, V, Tr, para.cores, scaleX = FALSE,
   
   names(results.varying) <- idx[idx.test]
   
-  list(results.linear = results.linear, results.constant = results.constant,
+  if(linear.fit == FALSE) {
+    results <- list(results.linear = results.linear, results.constant = results.constant,
+                results.varying = results.varying,
+                BQ2.center.est = colMeans(BQ2))
+  }
+  
+  if(linear.fit == FALSE) {
+    results <- list(results.constant = results.constant,
        results.varying = results.varying,
        BQ2.center.est = colMeans(BQ2))
+  }
+  
+  return(results)
 }
