@@ -20,41 +20,43 @@ source("eval.spVC.R")
 
 # input ----
 # rows are genes, columns are cells
-path.data.2 <- "/Users/sy5jx/Dropbox/Research/Papers/Collaboration/SingleCellData/Code/numeric_results/application/Cortex-10x/permutation/"
-S <- readRDS(paste0(path.data.2, "S-permuted.rds"))
+setwd("~/Dropbox/Research/Papers/Collaboration/SingleCellData/Code/numeric_results/application/Cerebellum-Slide/permutation/")
+Y = readRDS("counts.rds")
+S = readRDS("S-permuted.rds")
+weights = readRDS("weight.cell.rds")
 
-path.data.1 <- "/Users/sy5jx/Dropbox/Research/Papers/Collaboration/SingleCellData/Code/numeric_results/application/Cortex-10x/data/"
-Y <- readRDS(paste0(path.data.1, "Y.rds"))
-X <- readRDS(paste0(path.data.1, "X.rds"))
-boundary <- read.csv(paste0(path.data.1, "boundary-Cortex-10x.csv"))
-Tr.cell <- TriMesh(boundary, n = 1.8)
+type = c("Granule", "Bergmann", "Oligodendrocytes", "Purkinje", "MLI2",
+         "Astrocytes")
+X = as.matrix(weights)[, type]
+X = X/rowSums(as.matrix(weights))
+
+# boundary and triangulation for bivariate spline over triangulation
+boundary <- read.csv("cell_boundary_v2.csv")
+Tr.cell <- TriMesh(boundary, n = 2.1)
 points(S[, 1], S[, 2], pch = ".")
-points(boundary)
-V <- as.matrix(Tr.cell$V)
-Tr <- as.matrix(Tr.cell$Tr)
+V = as.matrix(Tr.cell$V)
+Tr = as.matrix(Tr.cell$Tr)
 
 # spatial pattern testing ----
-results <- test.spVC(Y = Y, X, S, V, Tr, para.cores = 4,
-                     fix.constant = colnames(X))
+results <- test.spVC(Y = Y, X, S, V, Tr, para.cores = 1)
 
 p.value.all <- sapply(1:length(results$results.constant), 
-                      function(iter) results$results.constant[[iter]]$p.value[8])
+       function(iter) results$results.constant[[iter]]$p.value[8])
 hist(p.value.all)
 p.adjust.all <- p.adjust(p.value.all, method = "BH")
 mean(p.adjust.all < 0.05)
-
-save(results, file = "Cortex-10x-model1.RData")
+save(results, file = "Cerebellum-BPST-results.RData")
 
 # plot the estimated gamma functions ----
 # extract coefficients for one specific gene
-results[[2]]$`ENSG00000173660`$coeff.beta
+results[[2]]$`Apoe`$coeff.beta
 # extract p-values
 # p values for constant effect starts with "beta_"
 # p values for varying effect starts with "gamma_"
-results[[2]]$`ENSG00000173660`$p.value
+results[[2]]$`Apoe`$p.value
 
 # scatter plots based on the original data ----
-coef.matrix <- results[[2]]$`ENSG00000173660`$coeff.gamma
+coef.matrix <- results[[2]]$`Apoe`$coeff.gamma
 gamma.points <- eval.spVC(coef.matrix, S, V, Tr, results$BQ2.center.est)
 dim(gamma.points)
 colnames(gamma.points)
@@ -78,8 +80,7 @@ x.grid <- seq(min(boundary[, 1]), max(boundary[, 1]), length.out = 50)
 y.grid <- seq(min(boundary[, 2]), max(boundary[, 2]), length.out = 50)
 coord.grid <- expand.grid(x.grid, y.grid)
 gamma.grid <- eval.spVC(coef.matrix, coord.grid, V, Tr, results$BQ2.center.est)
-colnames(boundary) <- c("V1", "V2")
-boundary <- data.frame(boundary)
+names(boundary) = c("V1", "V2")
 
 for(iter in 1:ncol(gamma.points)){
   data <- data.frame(coord.grid, gamma.grid[, iter])
@@ -107,7 +108,5 @@ for(iter in 1:ncol(gamma.points)){
   print(p.iter)
 }
 
-# summary ----
-length(results[[1]])
-length(results[[2]])
-length(results[[3]])
+
+

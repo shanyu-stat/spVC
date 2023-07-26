@@ -21,9 +21,10 @@
 #' \item{R2}{Deviance-based R-squared measure}
 #' @export
 library(mgcv)
-source("varying.test.R")
+source("varying.test.v2.R")
 
-fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
+fit.spVC.varying <- function(formula.spVC, Y.iter, dat.fit,
+                     size.factors, pen.list, BQ2.mtx.list){
   
   # x ="Calb2"
   # Y.iter <- as.vector(Y.est[x, ])
@@ -31,8 +32,8 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   dat.fit[length(dat.fit) + 1] <- Y.iter
   names(dat.fit)[length(dat.fit)] = "Y"
   mfit.spVC <- gam(formula.spVC, data = dat.fit,
-                  family = quasipoisson(), offset = log(size.factors),
-                  paraPen = pen.list)
+                   family = quasipoisson(), offset = log(size.factors),
+                   paraPen = pen.list)
   R2 <- max(0, 1 - mfit.spVC$deviance/mfit.spVC$null.deviance)
   Deviance <- mfit.spVC$deviance
   spVC.term <- attr(mfit.spVC$terms, "term.labels")
@@ -46,16 +47,15 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   coeff.gamma <- c()
   
   if(length(idx.v) != 0) {
-    coeff.gamma <- matrix(mfit.spVC$coefficients[-idx.c], 
-                          ncol = length(idx.v))
-    colnames(coeff.gamma) <- spVC.term[idx.v]
+    # coeff.gamma <- matrix(mfit.spVC$coefficients[-idx.c], 
+    #                       ncol = length(idx.v))
+    # colnames(coeff.gamma) <- spVC.term[idx.v]
     
     p.X <- length(idx.c)
     V.all <- mfit.spVC$Vp
     edf.all <- mfit.spVC$edf
-    Xt <- dat.fit$gamma_0
     rdf <- length(mfit.spVC$y) - sum(mfit.spVC$edf)
-    dim.BQ2 <- cumsum(rep(ncol(Xt), length(idx.v)))
+    dim.BQ2 <- cumsum(unlist(lapply(BQ2.mtx.list[spVC.term[idx.v]], ncol)))
     if(length(idx.v) == 1) {
       start.all <- p.X + 1
     } else {
@@ -63,8 +63,9 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
     }
     stop.all <- dim.BQ2 + p.X
     
-    p.value.v <- varying.test(start.all, stop.all, 
-                              V.all, coeff.fit, edf.all, Xt, rdf)
+    p.value.v <- varying.test.v2(start.all, stop.all, 
+                              V.all, coeff.fit, edf.all, 
+                              BQ2.mtx.list[spVC.term[idx.v]], rdf)
     # p.value.v
     names(p.value.v) <- spVC.term[idx.v]
   }
@@ -73,5 +74,5 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   
   cat(p.value.v, "\n")
   list(p.value = p.value, coeff.beta = coeff.beta,
-       coeff.gamma = coeff.gamma,  R2 = R2, Deviance = Deviance)
+       coeff.gamma = coeff.fit,  R2 = R2, Deviance = Deviance)
 }

@@ -74,6 +74,7 @@ testStat <- function (p, X, V, rank = NULL, type = 0, res.df = -1){
   else {
     pval <- 2
   }
+  cat(pval)
   if (pval > 1) {
     if (res.df <= 0) 
       pval <- (pchisq(d, df = rank1, lower.tail = FALSE) + 
