@@ -1,0 +1,54 @@
+---
+title: "Tutorial on the spVC based on simulation studies"
+author: "Shan Yu"
+date: "2023-09-01"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load & Install Packages
+
+```{r}
+rm(list = ls())
+
+# required packages & source files ----
+# for model estimation
+library(spVC)
+library(sp)
+# install_github("FIRST-Data-Lab/BPST")
+library(BPST)
+# install_github("FIRST-Data-Lab/Triangulation")
+library(Triangulation)
+library(MGLM)
+# for plots
+library(ggplot2)
+library(colorRamps)
+```
+
+
+## Generate random samples
+
+In this setion, we use the observed locations and 
+```{r}
+# input ----
+k <- 8000
+gene.size <- 5000
+
+# generate random dataset ----
+data(coords)
+coords$x <- coords$x/1000
+coords$y <- coords$y/1000
+save(coords, file = "data/coords.rda")
+data(weight.cell)
+df <- data.frame(x = coords$x, y = coords$y, as.matrix(weight.cell))
+Z <- df[, c("Bergmann", "Granule", "MLI2", "Oligodendrocytes")]
+Z <- as.matrix(Z)
+#data.sample <- data.simulation(gene.size, k, coords, Z)
+
+X <- data.sample$Z[, -1]
+S <- data.sample$S
+sample <- data.sample$sample
+```

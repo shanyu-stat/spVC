@@ -77,5 +77,5 @@ data.simulation <- function(gene.size, k, coords, Z) {
   })
   size.factors <- floor(size.factors * 10000)
 
-  list(sample = sample, S = S, Z = Z)
+  list(sample = sample, S = S, Z = Z[, -1])
 }
