@@ -18,7 +18,6 @@
 #' \item{p.value}{p-values of model components}
 #' \item{coeff.beta}{estimate beta}
 #' \item{coeff.gamma}{estimate basis coefficients of gamma functions}
-#' \item{R2}{Deviance-based R-squared measure}
 #' @export
 
 fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
@@ -31,7 +30,7 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
   mfit.spVC <- gam(formula.spVC, data = dat.fit,
                   family = quasipoisson(), offset = log(size.factors),
                   paraPen = pen.list)
-  R2 <- max(0, 1 - mfit.spVC$deviance/mfit.spVC$null.deviance)
+  # R2 <- max(0, 1 - mfit.spVC$deviance/mfit.spVC$null.deviance)
   Deviance <- mfit.spVC$deviance
   spVC.term <- attr(mfit.spVC$terms, "term.labels")
   idx.c <- which(substr(spVC.term, 1, 5) == "beta_")
@@ -71,5 +70,5 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
 
   # cat(p.value.v, "\n")
   list(p.value = p.value, coeff.beta = coeff.beta,
-       coeff.gamma = coeff.gamma,  R2 = R2, Deviance = Deviance)
+       coeff.gamma = coeff.gamma, Deviance = Deviance)
 }

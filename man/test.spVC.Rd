@@ -18,6 +18,7 @@ test.spVC(
   p.adjust.method = "BH",
   p.adjust.thresh = 0.05,
   linear.fit = FALSE,
+  reduced.only = FALSE,
   filter.min.nonzero = 100,
   fix.constant = NULL,
   fix.varying = NULL,
@@ -47,7 +48,17 @@ where \code{nTr} is the number of triangles in the triangulation.}
 
 \item{linear.fit}{indicator of whether to fit generalized linear model.}
 
-\item{filter.min.nonzero}{filter genes whose number of nonzero counts is larger than \code{filter.min.nonzero}.}
+\item{reduced.only}{indicator of whether to consider the spatially varying
+coefficients of the covariates.}
+
+\item{filter.min.nonzero}{filter genes whose number of nonzero counts is
+larger than \code{filter.min.nonzero}.}
+
+\item{fix.constant}{subset of covariates only considering the constant effect
+in the model.}
+
+\item{fix.varying}{subset of covariates considering the spatially varying
+coefficients.}
 }
 \value{
 \item{results.linear}{A list of spatial pattern testing results for
