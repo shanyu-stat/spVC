@@ -145,7 +145,10 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
 
   results.constant <- mclapply(idx, mc.cores = para.cores,
                                FUN = function(x){
-                                 cat("Fitting Model 1 for Gene", print.idx[x], "out of", length(idx), "genes.\n")
+                                 if(print.idx[x] %% 500 == 0) {
+                                   cat("Fitting Model 1 for Gene", print.idx[x],
+                                       "out of", length(idx), "genes.\n")
+                                 }
                                  mfit.iter <- fit.spVC(formula.ggam, Y.iter = as.vector(Y.est[x, ]),
                                                        dat.fit = dat.fit, size.factors = size.factors,
                                                        pen.list = pen.list)
@@ -178,8 +181,10 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
       results.varying <-
         mclapply(idx[idx.test], mc.cores = para.cores,
                  FUN = function(x){
-                   cat("Fitting Model 2 for Gene", print.idx[x], "out of",
-                       length(idx.test), "genes.\n")
+                   if(print.idx[x] %% 500 == 0) {
+                     cat("Fitting Model 2 for Gene", print.idx[x],
+                         "out of", length(idx), "genes.\n")
+                   }
                    varying.set1 <- p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]
                    varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
                                          fix.varying)
