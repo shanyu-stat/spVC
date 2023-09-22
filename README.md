@@ -2,13 +2,16 @@ spVC for the detection and interpretation of spatial gene expression
 variation
 ================
 Shan Yu and Wei Vivian Li
-2023-09-13
+2023-09-21
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ## Introduction
 
-TBA
+The spVC method aims to provide a flexible spatial regression model and
+corresponding inference tool to elucidate the relationships between gene
+expression, spatial locations, and other cell/spot-level covariates in a
+streamlined approach.
 
 Any suggestions on the package are welcome! For technical problems,
 please report to [Issues](https://github.com/shanyu-stat/spVC/issues).

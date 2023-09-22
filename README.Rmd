@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
  
 ## Introduction
 
-TBA
+The spVC method aims to provide a flexible spatial regression model and corresponding inference tool to elucidate the relationships between gene expression, spatial locations, and other cell/spot-level covariates in a streamlined approach.
 
 Any suggestions on the package are welcome! For technical problems, please report to [Issues](https://github.com/shanyu-stat/spVC/issues). For suggestions and comments on the method, please contact Shan (<sy5jx@virginia.edu>) or Vivian (<weil@ucr.edu>). 
 
