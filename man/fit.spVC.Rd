@@ -9,6 +9,11 @@ studies.}
 fit.spVC(formula.spVC, Y.iter, dat.fit, size.factors, pen.list)
 }
 \arguments{
+\item{formula.spVC}{A formula of Generalized Partially Spatially Varying
+Coefficient Model.}
+
+\item{Y.iter}{A vector of count of RNA-seq reads with length \code{n}.}
+
 \item{dat.fit}{A list of data containing explanatory variables,
 spline basis functions, and the kronecker product of explanatory variables and
 spline basis functions.}
@@ -16,17 +21,11 @@ spline basis functions.}
 \item{size.factors}{A vector of size.factors with length \code{n}.}
 
 \item{pen.list}{A list of roughness penalty in estimating spatial patterns.}
-
-\item{formula.spSV}{A formula of Generalized Partially Spatially Varying
-Coefficient Model.}
-
-\item{Y}{A vector of count of RNA-seq reads with length \code{n}.}
 }
 \value{
 \item{p.value}{p-values of model components}
 \item{coeff.beta}{estimate beta}
 \item{coeff.gamma}{estimate basis coefficients of gamma functions}
-\item{R2}{Deviance-based R-squared measure}
 }
 \description{
 This function generates the p-value and estimated coefficients of each

@@ -41,10 +41,10 @@ testStat <- function (p, X, V, rank = NULL, type = 0, res.df = -1){
     vec1[, k:k1] <- t(rB %*% diag(c(-1, 1)) %*% t(vec[, k:k1]))
     vec[, k:k1] <- t(rB %*% t(vec[, k:k1]))
   } else {
-    vec1 <- vec <- if (k == 0) 
+    vec1 <- vec <- if (k == 0)
       t(t(vec) * sqrt(1/ed$val[1]))
     else t(t(vec)/sqrt(ed$val[1:k]))
-    if (k == 1) 
+    if (k == 1)
       rank <- 1
   }
   d <- t(vec) %*% (R %*% p)
@@ -65,8 +65,8 @@ testStat <- function (p, X, V, rank = NULL, type = 0, res.df = -1){
       pval <- (psum.chisq(d, val) + psum.chisq(d1, val))/2
     } else {
       k0 <- max(1, round(res.df))
-      pval <- (psum.chisq(0, c(val, -d/k0), df = c(rep(1, length(val)), k0), 
-                          tol = .Machine$double.xmin^0.95) + 
+      pval <- (psum.chisq(0, c(val, -d/k0), df = c(rep(1, length(val)), k0),
+                          tol = .Machine$double.xmin^0.95) +
                  psum.chisq(0, c(val, -d1/k0),  df = c(rep(1, length(val)), k0),
                             tol = .Machine$double.xmin^0.95))/2
     }
@@ -74,15 +74,14 @@ testStat <- function (p, X, V, rank = NULL, type = 0, res.df = -1){
   else {
     pval <- 2
   }
-  # cat(pval)
   if (pval > 1) {
-    if (res.df <= 0) 
-      pval <- (pchisq(d, df = rank1, lower.tail = FALSE) + 
+    if (res.df <= 0)
+      pval <- (pchisq(d, df = rank1, lower.tail = FALSE) +
                  pchisq(d1, df = rank1, lower.tail = FALSE))/2
-    else pval <- (pf(d/rank1, rank1, res.df, lower.tail = FALSE) + 
+    else pval <- (pf(d/rank1, rank1, res.df, lower.tail = FALSE) +
                     pf(d1/rank1, rank1, res.df, lower.tail = FALSE))/2
   }
   pval <- min(1, pval)
   if (pval == 0.5 || pval == 1) pval <- runif(1)
-  list(stat = d, pval = pval, rank = rank) 
+  list(stat = d, pval = pval, rank = rank)
 }

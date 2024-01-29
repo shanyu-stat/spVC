@@ -6,9 +6,9 @@
 #' component in the GSVCM.
 #'
 #' @import mgcv stats
-#' @param formula.spSV A formula of Generalized Partially Spatially Varying
+#' @param formula.spVC A formula of Generalized Partially Spatially Varying
 #' Coefficient Model.
-#' @param Y A vector of count of RNA-seq reads with length \code{n}.
+#' @param Y.iter A vector of count of RNA-seq reads with length \code{n}.
 #' @param dat.fit A list of data containing explanatory variables,
 #' spline basis functions, and the kronecker product of explanatory variables and
 #' spline basis functions.
@@ -68,7 +68,6 @@ fit.spVC <- function(formula.spVC, Y.iter, dat.fit, size.factors, pen.list){
 
   p.value <- c(p.value.c, p.value.v)
 
-  # cat(p.value.v, "\n")
   list(p.value = p.value, coeff.beta = coeff.beta,
        coeff.gamma = coeff.gamma, Deviance = Deviance)
 }

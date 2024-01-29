@@ -15,9 +15,11 @@
 #' for a vertex.
 #' @param Tr The triangulation matrix of dimension \code{nTr} by three,
 #' where \code{nTr} is the number of triangles in the triangulation.
-#' @param para.cores Number of cores in parallel computing.
+#' @param para.cores number of cores in parallel computing.
+#' @param scaleX an indicator of whether to standardize the covariates.
+#' @param subset a vector of genes to be tested.
 #' @param p.adjust.method The p-value adjustment methods.
-#' @param p.adjust.thresh Significant value for adjusted p-value.
+#' @param p.adjust.thresh significant value for adjusted p-value.
 #' @param linear.fit indicator of whether to fit generalized linear model.
 #' @param reduced.only indicator of whether to consider the spatially varying
 #' coefficients of the covariates.
@@ -27,6 +29,8 @@
 #' in the model.
 #' @param fix.varying subset of covariates considering the spatially varying
 #' coefficients.
+#' @param size.factors a vector of given size.factor for each cell. If
+#' \code{size.factor = NULL}, the size.factor is calculated from data.
 #' @return
 #' \item{results.linear}{A list of spatial pattern testing results for
 #' each gene based on the generalized linear model. We conduct the test for

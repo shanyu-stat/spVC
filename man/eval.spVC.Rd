@@ -2,19 +2,20 @@
 % Please edit documentation in R/eval.spVC.R
 \name{eval.spVC}
 \alias{eval.spVC}
-\title{spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the 
+\title{spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 detection of spatial expression patterns for large spatial transcriptomic
-studies.
- 
-This function generates estimated gamma functions at given locations}
+studies.}
 \usage{
 eval.spVC(coef.gamma, S, V, Tr, center)
 }
 \arguments{
+\item{coef.gamma}{matrix of spline coefficients; each column represents one
+coefficients for one spline function.}
+
 \item{S}{A matrix \code{n} by two of locations to be evaluated.}
 
 \item{V}{The \code{nV} by two matrix of verities of a triangulation,
-where \code{nV} is the number of vertices. Each row is the coordinates 
+where \code{nV} is the number of vertices. Each row is the coordinates
 for a vertex.}
 
 \item{Tr}{The triangulation matrix of dimension \code{nTr} by three,
@@ -28,9 +29,5 @@ where \code{nTr} is the number of triangles in the triangulation.}
 \item{gamma.value}{estimated gamma functions at points \code{S}}
 }
 \description{
-spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the 
-detection of spatial expression patterns for large spatial transcriptomic
-studies.
- 
 This function generates estimated gamma functions at given locations
 }

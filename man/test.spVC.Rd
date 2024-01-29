@@ -40,11 +40,15 @@ for a vertex.}
 \item{Tr}{The triangulation matrix of dimension \code{nTr} by three,
 where \code{nTr} is the number of triangles in the triangulation.}
 
-\item{para.cores}{Number of cores in parallel computing.}
+\item{para.cores}{number of cores in parallel computing.}
+
+\item{scaleX}{an indicator of whether to standardize the covariates.}
+
+\item{subset}{a vector of genes to be tested.}
 
 \item{p.adjust.method}{The p-value adjustment methods.}
 
-\item{p.adjust.thresh}{Significant value for adjusted p-value.}
+\item{p.adjust.thresh}{significant value for adjusted p-value.}
 
 \item{linear.fit}{indicator of whether to fit generalized linear model.}
 
@@ -59,6 +63,9 @@ in the model.}
 
 \item{fix.varying}{subset of covariates considering the spatially varying
 coefficients.}
+
+\item{size.factors}{a vector of given size.factor for each cell. If
+\code{size.factor = NULL}, the size.factor is calculated from data.}
 }
 \value{
 \item{results.linear}{A list of spatial pattern testing results for
