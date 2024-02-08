@@ -89,7 +89,6 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     size.factors <- size.factors[ind]
   }
 
-
   basis.cell <- basis(V = V, Tr = Tr, d = d, r = 1,
                       Z = as.matrix(S.est))
 
@@ -169,12 +168,12 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     if(!is.null(X) & length(fix.constant) != length(colnames(X))) {
       p.value.all <- lapply(results.constant, "[[", 1)
       p.value.mtx <- do.call("rbind", p.value.all)
-      p.adj.name <- colnames(X.est[, -1])
+      p.adj.name <- colnames(X.est)[-1]
       p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method = p.adjust.method)
       if(is.null(fix.varying)){
         idx.X <- which(
           apply(
-            p.adj[, 1:(p.X - 1)], 1,
+            as.matrix(p.adj[, 1:(p.X - 1)]), 1,
             FUN = function(x){
               varying.set1 <- p.adj.name[x < p.adjust.thresh]
               varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
