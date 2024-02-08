@@ -71,7 +71,10 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
   if(is.null(X)) {
     X.est <- matrix(1, nrow = length(ind), ncol = 1)
   } else {
+    X <- matrix(X, nrow = nrow(S))
+    if(is.null(colnames(X))) colnames(X) <- paste0("X", 1:ncol(X))
     X.est <- cbind(1, X[ind, ])
+    colnames(X.est) <- c("0", colnames(X))
     if(scaleX == TRUE){
       X.est[, -1] = scale(X.est[, -1])
     }
@@ -166,17 +169,26 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     if(!is.null(X) & length(fix.constant) != length(colnames(X))) {
       p.value.all <- lapply(results.constant, "[[", 1)
       p.value.mtx <- do.call("rbind", p.value.all)
+      p.adj.name <- colnames(X.est[, -1])
       p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method = p.adjust.method)
       if(is.null(fix.varying)){
-        idx.X <- which(apply(p.adj[, 1:(p.X - 1)], 1,
-                             FUN = function(x) any(x < p.adjust.thresh)))
+        idx.X <- which(
+          apply(
+            p.adj[, 1:(p.X - 1)], 1,
+            FUN = function(x){
+              varying.set1 <- p.adj.name[x < p.adjust.thresh]
+              varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
+                                    fix.varying)
+              length(intersect(varying.set1, varying.set2)) > 0
+            }
+          )
+        )
         idx.S <- which(p.adj[, p.X] < p.adjust.thresh)
         idx.test <- intersect(idx.X, idx.S)
       } else {
         idx.test <- 1:length(idx)
       }
 
-      p.adj.name <- colnames(X.est[, -1])
       cat("Model 2: Conducting tests for", length(idx.test), "genes.\n")
 
       print.idx <- 1:length(idx.test)
