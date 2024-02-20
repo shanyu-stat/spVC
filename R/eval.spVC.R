@@ -1,4 +1,4 @@
-#' spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
+#' spVC: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 #' detection of spatial expression patterns for large spatial transcriptomic
 #' studies.
 #'

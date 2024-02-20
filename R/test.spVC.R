@@ -1,4 +1,4 @@
-#' spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
+#' spVC: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 #' detection of spatial expression patterns for large spatial transcriptomic
 #' studies.
 #'
@@ -70,7 +70,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
 
   S <- S[idx.s, ]
   ind <- inVT(V, Tr, S[, 1], S[, 2])$ind.inside
-  cat("spCV model will use ", length(ind)/nrow(S)*100,
+  cat("spVC model will use ", length(ind)/nrow(Y)*100,
       "% of the original data.\n")
   S.est <- S[ind, ]
 
