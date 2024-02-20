@@ -25,6 +25,8 @@
 #' coefficients of the covariates.
 #' @param filter.min.nonzero filter genes whose number of nonzero counts is
 #' larger than \code{filter.min.nonzero}.
+#' @param filter.spot.counts filter spots whose total gene expression counts is
+#' larger than \code{filter.spot.counts}.
 #' @param fix.constant subset of covariates only considering the constant effect
 #' in the model.
 #' @param fix.varying subset of covariates considering the spatially varying
@@ -51,8 +53,9 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
                       subset = 1:nrow(Y), p.adjust.method ="BH",
                       p.adjust.thresh = 0.05, linear.fit = FALSE,
                       reduced.only = FALSE,
-                      filter.min.nonzero = 100, fix.constant = NULL,
-                      fix.varying = NULL, size.factors = NULL){
+                      filter.min.nonzero = 100, filter.spot.counts = 100,
+                      fix.constant = NULL, fix.varying = NULL,
+                      size.factors = NULL){
   # data prep ----
   # standardize location points and boundary
   min.x <- min(V[, 1]); max.x <- max(V[, 1])
@@ -62,16 +65,21 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
   S[, 1] <- (S[, 1] - min.x)/max.x
   S[, 2] <- (S[, 2] - min.y)/max.y
 
+  # filter spots with low gene expression
+  idx.s <- which(colSums(Y) >= filter.spot.counts)
+
+  S <- S[idx.s, ]
   ind <- inVT(V, Tr, S[, 1], S[, 2])$ind.inside
   cat("spCV model will use ", length(ind)/nrow(S)*100,
       "% of the original data.\n")
-  d = 2
-
   S.est <- S[ind, ]
+
   if(is.null(X)) {
     X.est <- matrix(1, nrow = length(ind), ncol = 1)
   } else {
-    X <- matrix(X, nrow = nrow(S))
+    X <- matrix(X, nrow = ncol(Y))
+    X <- X[idx.s, ]
+    X <- matrix(X, nrow = length(idx.s))
     if(is.null(colnames(X))) colnames(X) <- paste0("X", 1:ncol(X))
     X.est <- cbind(1, X[ind, ])
     colnames(X.est) <- c("0", colnames(X))
@@ -79,9 +87,11 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
       X.est[, -1] = scale(X.est[, -1])
     }
   }
-
   colnames(X.est)[1] <- "0"
+
+  Y <- Y[, idx.s]
   Y.est <- Y[, ind]
+
   if(is.null(size.factors)){
     size.factors <- colSums(Y.est)
     size.factors <- size.factors/median(size.factors)
@@ -89,6 +99,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     size.factors <- size.factors[ind]
   }
 
+  d = 2
   basis.cell <- basis(V = V, Tr = Tr, d = d, r = 1,
                       Z = as.matrix(S.est))
 
