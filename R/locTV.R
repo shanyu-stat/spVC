@@ -21,7 +21,7 @@ locTV <- function(V1, V2, V3, Mat, d) {
   Dy <- dirder(Id, lamy[1], lamy[2], lamy[3])
 
   area <- triarea(V1, V2, V3)
-  Mat <- area * Mat
+  Mat <- abs(area) * Mat
   K <- (crossprod(Dx, Mat) %*% Dx + crossprod(Dy, Mat) %*% Dy)
   return(K)
 }

@@ -70,7 +70,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
 
   S <- S[idx.s, ]
   ind <- inVT(V, Tr, S[, 1], S[, 2])$ind.inside
-  cat("spVC model will use ", length(ind)/nrow(Y)*100,
+  cat("spVC model will use ", length(ind)/ncol(Y)*100,
       "% of the original data.\n")
   S.est <- S[ind, ]
 
@@ -115,7 +115,6 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
   BQ2 <- as.matrix(B %*% Q2); dim(BQ2)
   BQ2.center <- scale(BQ2, scale = FALSE)
   PQ2 <- as.matrix(crossprod(Q2, P) %*% Q2); dim(PQ2)
-
   dat.fit <- as.data.frame(X.est)
   pen.list = list()
   p.X = ncol(X.est)
