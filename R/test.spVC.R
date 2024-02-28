@@ -23,6 +23,9 @@
 #' @param linear.fit indicator of whether to fit generalized linear model.
 #' @param reduced.only indicator of whether to consider the spatially varying
 #' coefficients of the covariates.
+#' @param twostep indicator of whether to use the two step model estimation
+#'  pipeline or directly fit the full model and evaluate the significance of
+#'  each individual components in the spVC model.
 #' @param filter.min.nonzero filter genes whose number of nonzero counts is
 #' larger than \code{filter.min.nonzero}.
 #' @param filter.spot.counts filter spots whose total gene expression counts is
@@ -52,7 +55,7 @@
 test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
                       subset = 1:nrow(Y), p.adjust.method ="BH",
                       p.adjust.thresh = 0.05, linear.fit = FALSE,
-                      reduced.only = FALSE,
+                      reduced.only = FALSE, twostep = TRUE,
                       filter.min.nonzero = 100, filter.spot.counts = 100,
                       fix.constant = NULL, fix.varying = NULL,
                       size.factors = NULL){
@@ -70,8 +73,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
 
   S <- S[idx.s, ]
   ind <- inVT(V, Tr, S[, 1], S[, 2])$ind.inside
-  cat("spVC model will use ", length(ind)/ncol(Y)*100,
-      "% of the original data.\n")
+  cat("spVC model will use ", length(ind)/ncol(Y)*100, "% of the original data.\n")
   S.est <- S[ind, ]
 
   if(is.null(X)) {
@@ -100,8 +102,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
   }
 
   d = 2
-  basis.cell <- basis(V = V, Tr = Tr, d = d, r = 1,
-                      Z = as.matrix(S.est))
+  basis.cell <- basis(V = V, Tr = Tr, d = d, r = 1, Z = as.matrix(S.est))
 
   B <- basis.cell$B; dim(B)
   Q2 <- basis.cell$Q2; dim(Q2)
@@ -129,7 +130,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
   if(is.null(rownames(Y.est))) rownames(Y.est) <- paste0("gene", 1:nrow(Y.est))
   idx <- names(which(apply(Y.est[subset, ], 1,
                            function(x) sum(x != 0) > filter.min.nonzero)))
-  cat("Model 1: Conducting tests for", length(idx), " genes.\n")
+  cat("Conducting tests for", length(idx), " genes.\n")
   print.idx <- 1:length(idx)
   names(print.idx) <- idx
   results.linear <- NULL
@@ -154,87 +155,117 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     names(results.linear) <- idx
   }
 
-  # fit model with spatial effect ----
-  formula.ggam <- as.formula(
-    paste0("Y ~ 0 + ", paste0(names(dat.fit)[c(1:(p.X+1))], collapse = " + "))
-  )
+  # full spVC and evaluate the significance of each individual component ----
+  if(twostep == FALSE){
+    formula.full <- as.formula(paste0("Y ~ 0 + ",
+                                      paste0(names(dat.fit), collapse = " + ")))
 
-  results.constant <- mclapply(idx, mc.cores = para.cores,
-                               FUN = function(x){
-                                 if(print.idx[x] %% 500 == 0) {
-                                   cat("Fitting Model 1 for Gene", print.idx[x],
-                                       "out of", length(idx), "genes.\n")
+    results.full <- mclapply(idx, mc.cores = para.cores,
+                                 FUN = function(x){
+                                   if(print.idx[x] %% 500 == 0) {
+                                     cat("Fitting Full Model for Gene", print.idx[x],
+                                         "out of", length(idx), "genes.\n")
+                                   }
+                                   mfit.iter <- fit.spVC(formula.full, Y.iter = as.vector(Y.est[x, ]),
+                                                         dat.fit = dat.fit, size.factors = size.factors,
+                                                         pen.list = pen.list)
                                  }
-                                 mfit.iter <- fit.spVC(formula.ggam, Y.iter = as.vector(Y.est[x, ]),
-                                                       dat.fit = dat.fit, size.factors = size.factors,
-                                                       pen.list = pen.list)
-                               }
-  )
+    )
 
-  names(results.constant) <- idx
+    names(results.full) <- idx
+  }
 
-  # fit spatially varying coefficient models ----
-  if(reduced.only == FALSE) {
-    if(!is.null(X) & length(fix.constant) != length(colnames(X))) {
-      p.value.all <- lapply(results.constant, "[[", 1)
-      p.value.mtx <- do.call("rbind", p.value.all)
-      p.adj.name <- colnames(X.est)[-1]
-      p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method = p.adjust.method)
-      if(is.null(fix.varying)){
-        idx.X <- which(
-          apply(
-            as.matrix(p.adj[, 1:(p.X - 1)]), 1,
-            FUN = function(x){
-              varying.set1 <- p.adj.name[x < p.adjust.thresh]
-              varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
-                                    fix.varying)
-              length(intersect(varying.set1, varying.set2)) > 0
-            }
+  # fit model with spatial effect ----
+  if(twostep == TRUE){
+    formula.ggam <- as.formula(
+      paste0("Y ~ 0 + ", paste0(names(dat.fit)[c(1:(p.X+1))], collapse = " + "))
+    )
+
+    results.constant <- mclapply(idx, mc.cores = para.cores,
+                                 FUN = function(x){
+                                   if(print.idx[x] %% 500 == 0) {
+                                     cat("Fitting Model 1 for Gene", print.idx[x],
+                                         "out of", length(idx), "genes.\n")
+                                   }
+                                   mfit.iter <- fit.spVC(formula.ggam, Y.iter = as.vector(Y.est[x, ]),
+                                                         dat.fit = dat.fit, size.factors = size.factors,
+                                                         pen.list = pen.list)
+                                 }
+    )
+
+    names(results.constant) <- idx
+
+    # fit spatially varying coefficient models ----
+    if(reduced.only == FALSE) {
+      if(!is.null(X) & length(fix.constant) != length(colnames(X))) {
+        p.value.all <- lapply(results.constant, "[[", 1)
+        p.value.mtx <- do.call("rbind", p.value.all)
+        p.adj.name <- colnames(X.est)[-1]
+        p.adj <- apply(p.value.mtx[, -1], 2, p.adjust, method = p.adjust.method)
+        if(is.null(fix.varying)){
+          idx.X <- which(
+            apply(
+              as.matrix(p.adj[, 1:(p.X - 1)]), 1,
+              FUN = function(x){
+                varying.set1 <- p.adj.name[x < p.adjust.thresh]
+                varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
+                                      fix.varying)
+                length(intersect(varying.set1, varying.set2)) > 0
+              }
+            )
           )
-        )
-        idx.S <- which(p.adj[, p.X] < p.adjust.thresh)
-        idx.test <- intersect(idx.X, idx.S)
-      } else {
-        idx.test <- 1:length(idx)
-      }
+          idx.S <- which(p.adj[, p.X] < p.adjust.thresh)
+          idx.test <- intersect(idx.X, idx.S)
+        } else {
+          idx.test <- 1:length(idx)
+        }
 
-      cat("Model 2: Conducting tests for", length(idx.test), "genes.\n")
+        cat("Model 2: Conducting tests for", length(idx.test), "genes.\n")
 
-      print.idx <- 1:length(idx.test)
-      names(print.idx) <- idx[idx.test]
+        print.idx <- 1:length(idx.test)
+        names(print.idx) <- idx[idx.test]
 
-      results.varying <-
-        mclapply(idx[idx.test], mc.cores = para.cores,
-                 FUN = function(x){
-                   if(print.idx[x] %% 500 == 0) {
-                     cat("Fitting Model 2 for Gene", print.idx[x],
-                         "out of", length(idx), "genes.\n")
+        results.varying <-
+          mclapply(idx[idx.test], mc.cores = para.cores,
+                   FUN = function(x){
+                     if(print.idx[x] %% 500 == 0) {
+                       cat("Fitting Model 2 for Gene", print.idx[x],
+                           "out of", length(idx), "genes.\n")
+                     }
+                     varying.set1 <- p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]
+                     varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
+                                           fix.varying)
+                     v.set <- paste0("gamma_",
+                                     c("0", intersect(varying.set1, varying.set2)))
+                     c.set <- paste0("beta_",  c("0", p.adj.name))
+                     formula.iter <- as.formula(
+                       paste0("Y ~ 0 + ", paste0(c.set, collapse = " + "),
+                              " + ", paste0(v.set, collapse = " + ")))
+                     mfit.iter <- fit.spVC(formula.iter, Y.iter = Y.est[x, ],
+                                           dat.fit = dat.fit,
+                                           size.factors = size.factors,
+                                           pen.list = pen.list)
                    }
-                   varying.set1 <- p.adj.name[p.adj[x, -p.X] < p.adjust.thresh]
-                   varying.set2 <- union(setdiff(colnames(X.est)[-1], fix.constant),
-                                         fix.varying)
-                   v.set <- paste0("gamma_",
-                                   c("0", intersect(varying.set1, varying.set2)))
-                   c.set <- paste0("beta_",  c("0", p.adj.name))
-                   formula.iter <- as.formula(
-                     paste0("Y ~ 0 + ", paste0(c.set, collapse = " + "),
-                            " + ", paste0(v.set, collapse = " + ")))
-                   mfit.iter <- fit.spVC(formula.iter, Y.iter = Y.est[x, ],
-                                         dat.fit = dat.fit, size.factors = size.factors,
-                                         pen.list = pen.list)
-                 }
-        )
-      names(results.varying) <- idx[idx.test]
+          )
+        names(results.varying) <- idx[idx.test]
+      }
     }
   }
 
   # prepare output ----
-  if(is.null(X) | length(fix.constant) == length(colnames(X)) | reduced.only == TRUE) {
+  if (is.null(X) | length(fix.constant) == length(colnames(X)) | reduced.only == TRUE) {
     results <- list(results.constant = results.constant,
                     BQ2.center.est = colMeans(BQ2))
-  } else {
+  }
+
+  if (twostep == FALSE) {
+    results <- list(results.full = results.full,
+                    BQ2.center.est = colMeans(BQ2))
+  }
+  if (twostep == TRUE) {
     if(linear.fit == TRUE) {
-      results <- list(results.linear = results.linear, results.constant = results.constant,
+      results <- list(results.linear = results.linear,
+                      results.constant = results.constant,
                       results.varying = results.varying,
                       BQ2.center.est = colMeans(BQ2))
     }
