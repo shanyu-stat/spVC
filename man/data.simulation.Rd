@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.simulation.R
 \name{data.simulation}
 \alias{data.simulation}
-\title{spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
+\title{spVC: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 detection of spatial expression patterns for large spatial transcriptomic
 studies.}
 \usage{

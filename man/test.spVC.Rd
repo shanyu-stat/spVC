@@ -2,7 +2,7 @@
 % Please edit documentation in R/test.spVC.R
 \name{test.spVC}
 \alias{test.spVC}
-\title{spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
+\title{spVC: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 detection of spatial expression patterns for large spatial transcriptomic
 studies.}
 \usage{
@@ -19,7 +19,9 @@ test.spVC(
   p.adjust.thresh = 0.05,
   linear.fit = FALSE,
   reduced.only = FALSE,
+  twostep = TRUE,
   filter.min.nonzero = 100,
+  filter.spot.counts = 100,
   fix.constant = NULL,
   fix.varying = NULL,
   size.factors = NULL
@@ -55,8 +57,15 @@ where \code{nTr} is the number of triangles in the triangulation.}
 \item{reduced.only}{indicator of whether to consider the spatially varying
 coefficients of the covariates.}
 
+\item{twostep}{indicator of whether to use the two step model estimation
+pipeline or directly fit the full model and evaluate the significance of
+each individual components in the spVC model.}
+
 \item{filter.min.nonzero}{filter genes whose number of nonzero counts is
 larger than \code{filter.min.nonzero}.}
+
+\item{filter.spot.counts}{filter spots whose total gene expression counts is
+larger than \code{filter.spot.counts}.}
 
 \item{fix.constant}{subset of covariates only considering the constant effect
 in the model.}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit.spVC.R
 \name{fit.spVC}
 \alias{fit.spVC}
-\title{spCV: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
+\title{spVC: Generalized Spatially Varying Coefficient Modeling  (GSVCM) for the
 detection of spatial expression patterns for large spatial transcriptomic
 studies.}
 \usage{
