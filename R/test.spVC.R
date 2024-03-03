@@ -262,7 +262,7 @@ test.spVC <- function(Y, X = NULL, S, V, Tr, para.cores = 1, scaleX = FALSE,
     results <- list(results.full = results.full,
                     BQ2.center.est = colMeans(BQ2))
   }
-  if (twostep == TRUE) {
+  if (twostep == TRUE & !is.null(X) & length(fix.constant) != length(colnames(X))) {
     if(linear.fit == TRUE) {
       results <- list(results.linear = results.linear,
                       results.constant = results.constant,
