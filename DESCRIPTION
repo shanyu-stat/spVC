@@ -1,13 +1,12 @@
 Package: spVC
 Type: Package
-Title: What the Package Does (Title Case)
+Title: spVC for the detection and interpretation of spatial gene expression variation
 Version: 0.1.0
 Author: Shan Yu, Wei Vivian Li
 Maintainer: Shan Yu <sy5jx@virginia.edu>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: spVC is a statistical method based on a generalized Poisson model. spVC seamlessly integrates constant and spatially varying effects of covariates, facilitating comprehensive exploration of gene expression variability and enhancing interpretability.
 Depends: R (>= 3.1.0), BPST, MGLM, Matrix, mgcv
-License: What license is it under?
+License: GPL-3.0
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
